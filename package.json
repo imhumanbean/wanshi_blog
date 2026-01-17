@@ -1,0 +1,7 @@
+{
+  "name": "blog-project",
+  "private": true,
+  "scripts": {
+    "build:posts": "node scripts/build-posts.js"
+  }
+}

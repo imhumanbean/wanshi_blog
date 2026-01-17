@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>文章详情</title>
+    <meta name="description" content="博客文章详情页" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container header-inner">
+        <a class="brand" href="index.html">
+          <span class="brand-mark">B</span>
+          <span class="brand-text">我的个人博客</span>
+        </a>
+        <nav class="nav">
+          <a href="index.html#posts">文章</a>
+          <a href="index.html#about">关于</a>
+          <a href="index.html#subscribe">订阅</a>
+        </nav>
+        <button id="themeToggle" class="btn ghost">切换主题</button>
+      </div>
+    </header>
+
+    <main class="post-page">
+      <div class="container">
+        <a class="back-link" href="index.html#posts">← 返回文章列表</a>
+        <article class="post-article">
+          <p id="postMeta" class="post-meta"></p>
+          <h1 id="postTitle"></h1>
+          <div id="postTags" class="post-tags"></div>
+          <div id="postContent" class="post-content"></div>
+        </article>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <span>© 2026 我的个人博客</span>
+        <div class="footer-links">
+          <a href="mailto:hello@example.com">联系我</a>
+          <a href="index.html#top">回到顶部</a>
+        </div>
+      </div>
+    </footer>
+
+    <script src="post.js"></script>
+  </body>
+</html>

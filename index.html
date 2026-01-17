@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>万世会馆</title>
+    <meta
+      name="description"
+      content="记录我的学习、项目与生活的个人博客。"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container header-inner">
+        <a class="brand" href="#top">
+          <span class="brand-mark">B</span>
+          <span class="brand-text">万世会馆</span>
+        </a>
+        <nav class="nav">
+          <a href="#posts">文章</a>
+          <a href="#about">关于</a>
+          <a href="#subscribe">订阅</a>
+        </nav>
+        <button id="themeToggle" class="btn ghost">切换主题</button>
+      </div>
+    </header>
+
+    <main id="top">
+      <section id="posts" class="section section-compact">
+        <div class="container">
+          <div class="section-header">
+            <div>
+              <h2>最新文章</h2>
+              <p class="muted">精选近期发布的内容，欢迎收藏。</p>
+            </div>
+            <div class="search">
+              <input
+                id="searchInput"
+                type="search"
+                placeholder="搜索标题或标签"
+                aria-label="搜索文章"
+              />
+            </div>
+          </div>
+          <div class="posts-layout">
+            <aside class="posts-sidebar">
+              <h3>目录</h3>
+              <div id="postDirectory" class="post-directory"></div>
+            </aside>
+            <div class="posts-main">
+              <div id="postGrid" class="post-grid"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="about" class="section alt">
+        <div class="container about">
+          <div>
+            <h2>关于我</h2>
+            <p>
+              我是一个热爱记录与分享的开发者，关注产品、设计与效率工具。这个博客是我的
+              线上笔记本，既是给自己的总结，也是给同路人的小礼物。
+            </p>
+            <p>
+              如果你也喜欢这些话题，欢迎交流。我会持续更新项目实践、工具清单与成长思考。
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="subscribe" class="section">
+        <div class="container subscribe">
+          <div>
+            <h2>订阅更新</h2>
+            <p>留下邮箱，第一时间收到新文章通知。</p>
+          </div>
+          <form class="subscribe-form">
+            <input type="email" placeholder="you@example.com" required />
+            <button type="submit" class="btn primary">订阅</button>
+          </form>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <span>© 2026 我的个人博客</span>
+        <div class="footer-links">
+          <a href="mailto:hello@example.com">联系我</a>
+          <a href="#top">回到顶部</a>
+        </div>
+      </div>
+    </footer>
+
+    <script src="app.js"></script>
+  </body>
+</html>
