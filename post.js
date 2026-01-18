@@ -18,7 +18,7 @@ const renderMarkdown = (markdown) => {
   }
 
   const codeBlocks = [];
-  let text = escapeHtml(markdown);
+  let text = escapeHtml(markdown).replace(/\r\n/g, "\n");
 
   text = text.replace(/```([\s\S]*?)```/g, (match, code) => {
     const token = `__CODE_BLOCK_${codeBlocks.length}__`;
@@ -26,42 +26,104 @@ const renderMarkdown = (markdown) => {
     return token;
   });
 
-  text = text.replace(/^######\s+(.*)$/gm, "<h6>$1</h6>");
-  text = text.replace(/^#####\s+(.*)$/gm, "<h5>$1</h5>");
-  text = text.replace(/^####\s+(.*)$/gm, "<h4>$1</h4>");
-  text = text.replace(/^###\s+(.*)$/gm, "<h3>$1</h3>");
-  text = text.replace(/^##\s+(.*)$/gm, "<h2>$1</h2>");
-  text = text.replace(/^#\s+(.*)$/gm, "<h1>$1</h1>");
-  text = text.replace(/^>\s+(.*)$/gm, "<blockquote>$1</blockquote>");
+  text = text.replace(/^######\s+(.*)$/gm, "\n<h6>$1</h6>\n");
+  text = text.replace(/^#####\s+(.*)$/gm, "\n<h5>$1</h5>\n");
+  text = text.replace(/^####\s+(.*)$/gm, "\n<h4>$1</h4>\n");
+  text = text.replace(/^###\s+(.*)$/gm, "\n<h3>$1</h3>\n");
+  text = text.replace(/^##\s+(.*)$/gm, "\n<h2>$1</h2>\n");
+  text = text.replace(/^#\s+(.*)$/gm, "\n<h1>$1</h1>\n");
+  text = text.replace(/^>\s+(.*)$/gm, "\n<blockquote>$1</blockquote>\n");
 
   text = text.replace(/`([^`]+)`/g, "<code>$1</code>");
   text = text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
   text = text.replace(/\*(.+?)\*/g, "<em>$1</em>");
 
-  text = text.replace(/(?:^|\n)(- .*(?:\n- .*)*)/g, (match, list) => {
-    const items = list
-      .split("\n")
-      .map((line) => line.replace(/^- /, "").trim())
-      .filter(Boolean);
-    if (items.length === 0) {
-      return match;
-    }
-    return `\n<ul>${items.map((item) => `<li>${item}</li>`).join("")}</ul>`;
-  });
+  const renderList = (items, ordered, start) => {
+    const tag = ordered ? "ol" : "ul";
+    const startAttr =
+      ordered && Number.isFinite(start) && start > 1 ? ` start="${start}"` : "";
+    return `<${tag}${startAttr}>${items
+      .map((item) => `<li>${item}</li>`)
+      .join("")}</${tag}>`;
+  };
 
-  text = text.replace(
-    /(?:^|\n)(\d+\. .*(?:\n\d+\. .*)*)/g,
-    (match, list) => {
-      const items = list
-        .split("\n")
-        .map((line) => line.replace(/^\d+\.\s+/, "").trim())
-        .filter(Boolean);
-      if (items.length === 0) {
-        return match;
+  const renderListBlock = (block, ordered) => {
+    const itemPattern = ordered
+      ? /^\s*(\d+)\.\s+(.*)$/
+      : /^\s*-\s+(.*)$/;
+    const subUnordered = /^\s*-\s+(.*)$/;
+    const subOrdered = /^\s*\d+\.\s+(.*)$/;
+    const lines = block.split("\n");
+    const items = [];
+    const numbers = [];
+    let current = null;
+    let extras = [];
+
+    const flush = () => {
+      if (!current) {
+        return;
       }
-      return `\n<ol>${items.map((item) => `<li>${item}</li>`).join("")}</ol>`;
+      const cleanExtras = extras.filter((line) => line.trim() !== "");
+      let content = current;
+      if (cleanExtras.length > 0) {
+        const allUnordered = cleanExtras.every((line) => subUnordered.test(line));
+        const allOrdered = cleanExtras.every((line) => subOrdered.test(line));
+        if (allUnordered) {
+          const subItems = cleanExtras.map((line) =>
+            line.replace(subUnordered, "$1").trim()
+          );
+          content += renderList(subItems, false);
+        } else if (allOrdered) {
+          const subItems = cleanExtras.map((line) =>
+            line.replace(subOrdered, "$1").trim()
+          );
+          content += renderList(subItems, true);
+        } else {
+          content += `<p>${cleanExtras.join("<br />")}</p>`;
+        }
+      }
+      items.push(content);
+      current = null;
+      extras = [];
+    };
+
+    lines.forEach((line) => {
+      const match = line.match(itemPattern);
+      if (match) {
+        flush();
+        if (ordered) {
+          numbers.push(Number.parseInt(match[1], 10));
+          current = match[2].trim();
+        } else {
+          current = match[1].trim();
+        }
+        return;
+      }
+      if (current !== null && /^\s+/.test(line)) {
+        extras.push(line.trim());
+      } else if (line.trim()) {
+        if (current !== null) {
+          extras.push(line.trim());
+        }
+      }
+    });
+    flush();
+
+    if (items.length === 0) {
+      return block;
     }
+    const start = ordered ? numbers[0] || 1 : undefined;
+    return `\n${renderList(items, ordered, start)}\n`;
+  };
+
+  text = text.replace(/(?:^|\n)((?:\s*\d+\.\s+.*(?:\n|$))+)/g, (match, list) =>
+    renderListBlock(list.trimEnd(), true)
   );
+  text = text.replace(/(?:^|\n)((?:\s*-\s+.*(?:\n|$))+)/g, (match, list) =>
+    renderListBlock(list.trimEnd(), false)
+  );
+
+  text = text.replace(/\n{3,}/g, "\n\n");
 
   const blocks = text
     .split(/\n{2,}/)
@@ -129,7 +191,8 @@ const loadPost = async () => {
       return;
     }
     const authorText = post.author ? ` · ${post.author}` : "";
-    postMeta.textContent = `${post.date} · ${post.readTime}${authorText}`;
+    const views = Number.isFinite(post.views) ? post.views : 0;
+    postMeta.textContent = `${post.date} · ${post.readTime}${authorText} · 阅读量 ${views}`;
     postTitle.textContent = post.title;
     postTags.innerHTML = (post.tags || [])
       .map((tag) => `<span>${tag}</span>`)

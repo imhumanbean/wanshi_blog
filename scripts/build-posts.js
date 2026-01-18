@@ -13,36 +13,56 @@ const parseFrontMatter = (content) => {
   const raw = match[1];
   const body = content.slice(match[0].length);
   const data = {};
-  let currentKey = null;
 
-  raw.split(/\r?\n/).forEach((line) => {
+  const lines = raw.split(/\r?\n/);
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
     const trimmed = line.trim();
     if (!trimmed) {
-      return;
+      i += 1;
+      continue;
     }
+
     if (trimmed.startsWith("- ")) {
-      if (!currentKey) {
-        return;
-      }
-      if (!Array.isArray(data[currentKey])) {
-        data[currentKey] = [];
-      }
-      data[currentKey].push(trimmed.slice(2).trim());
-      return;
+      i += 1;
+      continue;
     }
+
     const separatorIndex = trimmed.indexOf(":");
     if (separatorIndex === -1) {
-      return;
+      i += 1;
+      continue;
     }
+
     const key = trimmed.slice(0, separatorIndex).trim();
     const value = trimmed.slice(separatorIndex + 1).trim();
-    currentKey = key;
-    if (value === "") {
-      data[key] = [];
-      return;
+
+    if (value === "|") {
+      const blockLines = [];
+      i += 1;
+      while (i < lines.length && (/^\s+/.test(lines[i]) || lines[i] === "")) {
+        blockLines.push(lines[i].replace(/^\s{2}/, ""));
+        i += 1;
+      }
+      data[key] = blockLines.join("\n").trim();
+      continue;
     }
+
+    if (value === "") {
+      const arrayItems = [];
+      i += 1;
+      while (i < lines.length && lines[i].trim().startsWith("- ")) {
+        arrayItems.push(lines[i].trim().slice(2).trim());
+        i += 1;
+      }
+      data[key] = arrayItems;
+      continue;
+    }
+
     data[key] = value.replace(/^"|"$/g, "");
-  });
+    i += 1;
+  }
 
   return { data, body };
 };
@@ -63,6 +83,9 @@ const buildPosts = () => {
       const content = fs.readFileSync(fullPath, "utf8");
       const { data, body } = parseFrontMatter(content);
 
+      const views = Number.parseInt(data.views, 10);
+      const safeViews = Number.isFinite(views) ? views : 0;
+
       return {
         title: data.title || path.basename(file, ".md"),
         date: data.date || "",
@@ -70,6 +93,7 @@ const buildPosts = () => {
         tags: data.tags || [],
         summary: data.summary || "",
         author: data.author || "",
+        views: safeViews,
         slug: data.slug || path.basename(file, ".md"),
         content: body.trim(),
       };

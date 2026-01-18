@@ -90,11 +90,12 @@ const renderPosts = () => {
     const card = document.createElement("article");
     card.className = "post-card";
     const authorText = post.author ? ` · ${post.author}` : "";
+    const views = Number.isFinite(post.views) ? post.views : 0;
     const postLink = post.slug
       ? `post.html?slug=${encodeURIComponent(post.slug)}`
       : "post.html";
     card.innerHTML = `
-      <div class="post-meta">${post.date} · ${post.readTime}${authorText}</div>
+      <div class="post-meta">${post.date} · ${post.readTime}${authorText} · 阅读量 ${views}</div>
       <h3>${post.title}</h3>
       <p>${post.summary}</p>
       <div class="post-tags">
