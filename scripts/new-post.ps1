@@ -40,8 +40,16 @@ if (-not $Author) {
 $date = Get-Date -Format "yyyy-MM-dd"
 $tagList = $Tags.Split(",") | ForEach-Object { $_.Trim() } | Where-Object { $_ }
 
-$slugBase = $Title.ToLower()
-$slug = $slugBase -replace "[^a-z0-9]+", "-" 
+$slugBase = $Title.ToLowerInvariant()
+$slugParts = New-Object System.Collections.Generic.List[string]
+foreach ($ch in $slugBase.ToCharArray()) {
+  if (($ch -ge "a" -and $ch -le "z") -or ($ch -ge "0" -and $ch -le "9")) {
+    $slugParts.Add($ch)
+  } else {
+    $slugParts.Add("-")
+  }
+}
+$slug = (-join $slugParts) -replace "-{2,}", "-"
 $slug = $slug.Trim("-")
 if (-not $slug) {
   $slug = "post"
@@ -55,21 +63,22 @@ if (Test-Path $filePath) {
   exit 1
 }
 
-$frontMatter = @(
-  "---"
-  "title: $Title"
-  "date: $date"
-  "readTime: $ReadTime"
-  "tags:"
-) + ($tagList | ForEach-Object { "  - $_" }) + @(
-  "summary: $Summary"
-  "author: $Author"
-  "---"
-  ""
-  "在这里写正文内容。"
-)
+$lines = New-Object System.Collections.Generic.List[string]
+$lines.Add("---")
+$lines.Add("title: $Title")
+$lines.Add("date: $date")
+$lines.Add("readTime: $ReadTime")
+$lines.Add("tags:")
+foreach ($tag in $tagList) {
+  $lines.Add("  - $tag")
+}
+$lines.Add("summary: $Summary")
+$lines.Add("author: $Author")
+$lines.Add("---")
+$lines.Add("")
+$lines.Add("在这里写正文内容。")
 
-$frontMatter | Set-Content -Path $filePath -Encoding UTF8
+$lines | Set-Content -Path $filePath -Encoding UTF8
 
 Write-Host "已新增文章：$fileName"
 
